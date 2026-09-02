@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { FeatureFlagProvider } from "@/context/FeatureFlagContext";
 import { WorkshopProvider } from "@/context/WorkshopContext";
+import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "AutoMester Pro ERP - Professzionális Műhelyirányítási Rendszer",
-  description: "Teljes körű autószerviz és járműnyilvántartó felhőalapú vállalatirányítási szoftver.",
+  title: "MŰHELY PRO - Autószerelő rendszer",
+  description: "Professzionális autószerelő és műhelyirányítási rendszer.",
 };
 
 export default function RootLayout({
@@ -16,13 +17,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="hu" className="dark">
-      <body className="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+      <body style={{ backgroundColor: "#0b1120", color: "#ffffff" }} className="min-h-screen antialiased flex flex-col">
         <FeatureFlagProvider>
           <WorkshopProvider>
-            <Navbar />
-            <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
-              {children}
-            </main>
+            <Sidebar />
+            <div className="lg:pl-64 flex flex-col min-h-screen">
+              <Navbar />
+              <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
+                {children}
+              </main>
+            </div>
           </WorkshopProvider>
         </FeatureFlagProvider>
       </body>

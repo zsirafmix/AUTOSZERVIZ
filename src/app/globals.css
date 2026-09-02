@@ -1,166 +1,105 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 220 30% 6%;
-    --foreground: 0 0% 100%;
-  }
+:root {
+  --background: #0b1120;
+  --foreground: #ffffff;
 }
 
 body {
   color: #ffffff;
-  background-color: #0c1017;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Segoe UI Web", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #0b1120;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   min-height: 100vh;
-  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  font-size: 15px;
   line-height: 1.5;
 }
 
-/* Windows 8 Metro Tile Base & Color Styles */
-.metro-tile {
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, filter 0.15s ease-out;
-  cursor: pointer;
-  user-select: none;
+/* Explicit vibrant card colors matching image 2 */
+.tile-cyan {
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
 }
-.metro-tile:hover {
-  transform: scale(1.025);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  filter: brightness(1.1);
-  z-index: 10;
+.tile-green {
+  background-color: #059669 !important;
+  color: #ffffff !important;
 }
-.metro-tile:active {
-  transform: scale(0.975);
+.tile-orange {
+  background-color: #ea580c !important;
+  color: #ffffff !important;
 }
-
-/* Vibrant Metro Solid Colors */
-.metro-blue {
-  background-color: #0078d7;
+.tile-purple {
+  background-color: #7c3aed !important;
+  color: #ffffff !important;
 }
-.metro-green {
-  background-color: #107c41;
-}
-.metro-orange {
-  background-color: #d83b01;
-}
-.metro-purple {
-  background-color: #5c2d91;
-}
-.metro-teal {
-  background-color: #008272;
-}
-.metro-amber {
-  background-color: #e3008c;
-}
-.metro-yellow {
-  background-color: #f7630c;
-}
-.metro-red {
-  background-color: #e81123;
-}
-.metro-dark {
-  background-color: #1f2937;
-}
-.metro-cyan {
-  background-color: #00bcf2;
-}
-.metro-indigo {
-  background-color: #6b69d6;
+.tile-pink {
+  background-color: #e11d48 !important;
+  color: #ffffff !important;
 }
 
-/* High Contrast Metro Form Inputs */
-.metro-input {
-  background-color: #161e2e;
-  border: 2px solid #374151;
-  color: #ffffff;
-  font-size: 16px;
-  border-radius: 8px;
-  padding: 14px 16px;
-  transition: all 0.2s;
+.tile-teal {
+  background-color: #0d9488 !important;
+  color: #ffffff !important;
 }
-.metro-input:focus {
-  border-color: #0078d7;
-  outline: none;
-  background-color: #1a2332;
-  box-shadow: 0 0 0 4px rgba(0, 120, 215, 0.25);
+.tile-royal {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
 }
-
-/* Big Metro Buttons */
-.btn-metro-primary {
-  background-color: #0078d7;
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 16px;
-  padding: 14px 28px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: all 0.15s;
+.tile-emerald {
+  background-color: #10b981 !important;
+  color: #ffffff !important;
 }
-.btn-metro-primary:hover {
-  background-color: #1084e3;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 120, 215, 0.4);
-}
-.btn-metro-primary:active {
-  transform: translateY(1px);
+.tile-violet {
+  background-color: #6d28d9 !important;
+  color: #ffffff !important;
 }
 
-.btn-metro-green {
-  background-color: #107c41;
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 16px;
-  padding: 14px 28px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: all 0.15s;
+.tile-red {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
 }
-.btn-metro-green:hover {
-  background-color: #168a4b;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 124, 65, 0.4);
+.tile-amber {
+  background-color: #ea580c !important;
+  color: #ffffff !important;
+}
+.tile-blue-dark {
+  background-color: #1d4ed8 !important;
+  color: #ffffff !important;
+}
+.tile-forest {
+  background-color: #047857 !important;
+  color: #ffffff !important;
 }
 
-.btn-metro-orange {
-  background-color: #d83b01;
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 16px;
-  padding: 14px 28px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: all 0.15s;
+.sidebar-bg {
+  background-color: #0f172a !important;
 }
-.btn-metro-orange:hover {
-  background-color: #e54a0f;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(216, 59, 1, 0.4);
+
+.topbar-bg {
+  background-color: #0b1120 !important;
+}
+
+.card-hover {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease-in-out;
+}
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0c1017;
+  background: #0b1120;
 }
 ::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: #334155;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
+  background: #475569;
 }
