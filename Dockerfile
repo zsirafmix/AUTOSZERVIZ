@@ -2,7 +2,7 @@ FROM node:20-slim AS base
 
 WORKDIR /app
 
-# Install OpenSSL and necessary build tools
+# Install OpenSSL and ca-certificates
 RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Dependencies
@@ -33,11 +33,13 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/dev.db ./dev.db
 COPY --from=builder /app/prisma ./prisma
+
+# Change ownership to nextjs user
+RUN chown -R nextjs:nodejs /app
 
 USER nextjs
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["npm", "run", "deploy-start"]
