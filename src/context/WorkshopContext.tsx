@@ -20,7 +20,7 @@ export interface BranchInfo {
   bayCount: number;
 }
 
-interface ActiveTimer {
+export interface ActiveTimer {
   workOrderId: string;
   orderNumber: string;
   licensePlate: string;
@@ -44,22 +44,23 @@ interface WorkshopContextType {
   setSearchQuery: (q: string) => void;
   notifications: string[];
   addNotification: (msg: string) => void;
-  removeNotification: (index: number) => void;
+  isLocked: boolean;
+  lockApp: () => void;
+  unlockApp: () => void;
 }
 
 const defaultUser: CurrentUser = {
-  id: "admin-1",
-  name: "Kovács István",
-  email: "admin@automesterpro.hu",
+  id: "default-user",
+  name: "Műhelyvezető",
+  email: "admin@automester.hu",
   role: "ADMIN",
-  pinCode: "1234",
 };
 
 const defaultBranch: BranchInfo = {
-  id: "branch-1",
-  name: "AutoMester Központ - Budapest XI.",
-  code: "BP-11",
-  address: "Hunyadi János út 16.",
+  id: "default-branch",
+  name: "Központi Autószerviz",
+  code: "HQ-01",
+  address: "Budapest",
   bayCount: 4,
 };
 
@@ -77,123 +78,208 @@ const WorkshopContext = createContext<WorkshopContextType>({
   setSearchQuery: () => {},
   notifications: [],
   addNotification: () => {},
-  removeNotification: () => {},
+  isLocked: false,
+  lockApp: () => {},
+  unlockApp: () => {},
 });
 
 export function WorkshopProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<CurrentUser>(defaultUser);
+  const [currentUser, setCurrentUserState] = useState<CurrentUser>(defaultUser);
   const [availableUsers, setAvailableUsers] = useState<CurrentUser[]>([]);
-  const [currentBranch, setCurrentBranch] = useState<BranchInfo>(defaultBranch);
+  const [currentBranch, setCurrentBranchState] = useState<BranchInfo>(defaultBranch);
   const [availableBranches, setAvailableBranches] = useState<BranchInfo[]>([]);
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState<string[]>([
-    "Üdvözöljük az AutoMester Pro ERP rendszerben!",
-    "ML-2026-0089 munkalap fékszerelése javítás alatt.",
-  ]);
+  const [notifications, setNotifications] = useState<string[]>([]);
+  const [isLocked, setIsLocked] = useState(true);
 
-  // Load initial users, branches, active timers
+  // 1. Initial State Restoration from localStorage & API
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [uRes, bRes, tRes] = await Promise.all([
-          fetch("/api/users").catch(() => null),
-          fetch("/api/branches").catch(() => null),
-          fetch("/api/timelogs/active").catch(() => null),
-        ]);
+    // Check if session token exists
+    const token = sessionStorage.getItem("automester_session_token");
+    if (token) {
+      setIsLocked(false);
+    } else {
+      setIsLocked(true);
+    }
 
-        if (uRes && uRes.ok) {
-          const uData = await uRes.json();
-          setAvailableUsers(uData);
-          if (uData.length > 0 && !currentUser.id.includes("-")) {
-            setCurrentUser(uData[0]);
+    async function init() {
+      try {
+        // Fetch users
+        const usersRes = await fetch("/api/users");
+        if (usersRes.ok) {
+          const users = await usersRes.json();
+          setAvailableUsers(users);
+
+          // Restore saved user ID from localStorage
+          const savedUserId = localStorage.getItem("automester_user_id");
+          const found = users.find((u: any) => u.id === savedUserId);
+          if (found) setCurrentUserState(found);
+          else if (users.length > 0) setCurrentUserState(users[0]);
+        }
+
+        // Fetch branches
+        const branchRes = await fetch("/api/branches");
+        if (branchRes.ok) {
+          const branches = await branchRes.json();
+          setAvailableBranches(branches);
+
+          // Restore saved branch ID from localStorage
+          const savedBranchId = localStorage.getItem("automester_branch_id");
+          const foundB = branches.find((b: any) => b.id === savedBranchId);
+          if (foundB) setCurrentBranchState(foundB);
+          else if (branches.length > 0) setCurrentBranchState(branches[0]);
+        }
+
+        // Restore active timers with real-time recalculation
+        const savedTimersJson = localStorage.getItem("automester_active_timers");
+        if (savedTimersJson) {
+          try {
+            const parsed: ActiveTimer[] = JSON.parse(savedTimersJson);
+            const now = Date.now();
+            const updated = parsed.map((t) => {
+              const start = new Date(t.startTime).getTime();
+              const elapsed = Math.max(0, Math.floor((now - start) / 1000));
+              return { ...t, elapsedSeconds: elapsed };
+            });
+            setActiveTimers(updated);
+          } catch (e) {
+            console.error("Error parsing timers", e);
           }
         }
-        if (bRes && bRes.ok) {
-          const bData = await bRes.json();
-          setAvailableBranches(bData);
-          if (bData.length > 0) setCurrentBranch(bData[0]);
-        }
-        if (tRes && tRes.ok) {
-          const tData = await tRes.json();
-          setActiveTimers(tData);
-        }
-      } catch (err) {
-        console.error("Error loading initial workshop context:", err);
+      } catch (e) {
+        console.error("Failed to initialize workshop context", e);
       }
     }
-    loadData();
+
+    init();
   }, []);
 
-  // Timer interval to increment seconds for active timers
+  // 2. Persist State Changes to localStorage
+  const setCurrentUser = (u: CurrentUser) => {
+    setCurrentUserState(u);
+    localStorage.setItem("automester_user_id", u.id);
+  };
+
+  const setCurrentBranch = (b: BranchInfo) => {
+    setCurrentBranchState(b);
+    localStorage.setItem("automester_branch_id", b.id);
+  };
+
+  const lockApp = () => {
+    sessionStorage.removeItem("automester_session_token");
+    setIsLocked(true);
+  };
+
+  const unlockApp = () => {
+    setIsLocked(false);
+  };
+
+  // 3. Live Stopwatch Interval (1 second tick + persistence)
   useEffect(() => {
+    if (activeTimers.length === 0) return;
+
     const interval = setInterval(() => {
-      setActiveTimers((prev) =>
-        prev.map((t) => ({
-          ...t,
-          elapsedSeconds: Math.floor((Date.now() - new Date(t.startTime).getTime()) / 1000),
-        }))
-      );
+      setActiveTimers((prev) => {
+        const now = Date.now();
+        const updated = prev.map((t) => {
+          const start = new Date(t.startTime).getTime();
+          const elapsed = Math.max(0, Math.floor((now - start) / 1000));
+          return { ...t, elapsedSeconds: elapsed };
+        });
+        localStorage.setItem("automester_active_timers", JSON.stringify(updated));
+        return updated;
+      });
     }, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeTimers.length]);
+
+  // 4. Daily 13:00 Auto-Backup Scheduled Checker
+  useEffect(() => {
+    const checkSchedule = async () => {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const todayStr = now.toISOString().split("T")[0];
+      const lastBackupDone = localStorage.getItem("automester_last_daily_backup_date");
+
+      if (currentHour >= 13 && lastBackupDone !== todayStr) {
+        console.log("Triggering daily 13:00 auto-backup...");
+        try {
+          const res = await fetch("/api/backup/schedule", { method: "POST" });
+          if (res.ok) {
+            localStorage.setItem("automester_last_daily_backup_date", todayStr);
+            addNotification("✅ Napi 13:00-s automatikus biztonsági mentés sikeresen lefutott!");
+          }
+        } catch (e) {
+          console.error("Auto-backup failed", e);
+        }
+      }
+    };
+
+    const interval = setInterval(checkSchedule, 60000); // check every minute
+    checkSchedule();
+
     return () => clearInterval(interval);
   }, []);
 
   const startTimer = async (workOrderId: string, orderNumber: string, licensePlate: string) => {
+    const newTimer: ActiveTimer = {
+      workOrderId,
+      orderNumber,
+      licensePlate,
+      mechanicId: currentUser.id,
+      mechanicName: currentUser.name,
+      startTime: new Date().toISOString(),
+      elapsedSeconds: 0,
+    };
+
+    const updated = [...activeTimers.filter((t) => t.workOrderId !== workOrderId), newTimer];
+    setActiveTimers(updated);
+    localStorage.setItem("automester_active_timers", JSON.stringify(updated));
+
+    // Also notify backend API
     try {
-      const res = await fetch("/api/timelogs", {
+      await fetch("/api/timelogs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "START",
           workOrderId,
           workerId: currentUser.id,
-          workerName: currentUser.name,
+          startTime: newTimer.startTime,
         }),
       });
-      if (res.ok) {
-        const newTimer: ActiveTimer = {
-          workOrderId,
-          orderNumber,
-          licensePlate,
-          mechanicId: currentUser.id,
-          mechanicName: currentUser.name,
-          startTime: new Date().toISOString(),
-          elapsedSeconds: 0,
-        };
-        setActiveTimers((prev) => [...prev.filter((t) => t.workOrderId !== workOrderId), newTimer]);
-        addNotification(`⏱️ Stopperóra elindítva: ${orderNumber} (${licensePlate})`);
-      }
     } catch (e) {
-      console.error("Failed to start timer", e);
+      console.error("Failed to save timelog start", e);
     }
   };
 
   const stopTimer = async (workOrderId: string) => {
-    try {
-      const res = await fetch("/api/timelogs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "STOP",
-          workOrderId,
-          workerId: currentUser.id,
-        }),
-      });
-      if (res.ok) {
-        setActiveTimers((prev) => prev.filter((t) => t.workOrderId !== workOrderId));
-        addNotification(`⏹️ Stopperóra leállítva és munkaidő rögzítve!`);
+    const timer = activeTimers.find((t) => t.workOrderId === workOrderId);
+    const updated = activeTimers.filter((t) => t.workOrderId !== workOrderId);
+    setActiveTimers(updated);
+    localStorage.setItem("automester_active_timers", JSON.stringify(updated));
+
+    if (timer) {
+      try {
+        const hours = Number((timer.elapsedSeconds / 3600).toFixed(2));
+        await fetch("/api/timelogs/active", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            workOrderId,
+            elapsedSeconds: timer.elapsedSeconds,
+            hours,
+          }),
+        });
+      } catch (e) {
+        console.error("Failed to stop timelog", e);
       }
-    } catch (e) {
-      console.error("Failed to stop timer", e);
     }
   };
 
   const addNotification = (msg: string) => {
-    setNotifications((prev) => [msg, ...prev.slice(0, 9)]);
-  };
-
-  const removeNotification = (index: number) => {
-    setNotifications((prev) => prev.filter((_, i) => i !== index));
+    setNotifications((prev) => [msg, ...prev.slice(0, 19)]);
   };
 
   return (
@@ -212,7 +298,9 @@ export function WorkshopProvider({ children }: { children: React.ReactNode }) {
         setSearchQuery,
         notifications,
         addNotification,
-        removeNotification,
+        isLocked,
+        lockApp,
+        unlockApp,
       }}
     >
       {children}

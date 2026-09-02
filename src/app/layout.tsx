@@ -4,6 +4,7 @@ import { FeatureFlagProvider } from "@/context/FeatureFlagContext";
 import { WorkshopProvider } from "@/context/WorkshopContext";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
+import AppContent from "@/components/AppContent";
 
 export const metadata: Metadata = {
   title: "MŰHELY PRO - Autószerelő rendszer",
@@ -20,13 +21,7 @@ export default function RootLayout({
       <body style={{ backgroundColor: "#0b1120", color: "#ffffff" }} className="min-h-screen antialiased flex flex-col">
         <FeatureFlagProvider>
           <WorkshopProvider>
-            <Sidebar />
-            <div className="lg:pl-64 flex flex-col min-h-screen">
-              <Navbar />
-              <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
-                {children}
-              </main>
-            </div>
+            <AppContent>{children}</AppContent>
           </WorkshopProvider>
         </FeatureFlagProvider>
       </body>

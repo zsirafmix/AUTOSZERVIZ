@@ -10,7 +10,9 @@ import {
   Building2,
   ChevronDown,
   Clock,
-  Square
+  Square,
+  Lock,
+  ShieldCheck
 } from "lucide-react";
 
 export default function Navbar() {
@@ -25,6 +27,7 @@ export default function Navbar() {
     stopTimer,
     searchQuery,
     setSearchQuery,
+    lockApp,
   } = useWorkshop();
   const { isFeatureEnabled } = useFeatureFlags();
 
@@ -80,6 +83,17 @@ export default function Navbar() {
           />
         </div>
 
+        {/* Quick Lock App Button */}
+        <button
+          onClick={lockApp}
+          title="Képernyő Zárolása"
+          style={{ backgroundColor: "#1e293b" }}
+          className="p-2.5 rounded-xl text-slate-300 hover:text-white border border-slate-700/80 transition flex items-center gap-1.5 text-xs font-bold shadow-sm"
+        >
+          <Lock className="w-4 h-4 text-amber-400" />
+          <span className="hidden sm:inline">Zárolás</span>
+        </button>
+
         {/* Notification Bell with Badge */}
         <div className="relative">
           <button
@@ -117,28 +131,39 @@ export default function Navbar() {
           {showUserMenu && (
             <div
               style={{ backgroundColor: "#1e293b" }}
-              className="absolute right-0 mt-2 w-60 rounded-xl border border-slate-700 shadow-2xl p-2 z-50 animate-in fade-in"
+              className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-700 shadow-2xl p-2 z-50 animate-in fade-in"
             >
-              <div className="text-xs font-bold text-slate-400 px-3 py-1.5 uppercase border-b border-slate-700">
-                Szerepkör váltása:
+              <div className="text-xs font-bold text-slate-400 px-3 py-1.5 uppercase border-b border-slate-700 flex justify-between items-center">
+                <span>Szerepkör váltása:</span>
               </div>
-              {availableUsers.map((u) => (
-                <button
-                  key={u.id}
-                  onClick={() => {
-                    setCurrentUser(u);
-                    setShowUserMenu(false);
-                  }}
-                  className={`w-full text-left p-2.5 rounded-lg text-xs font-bold transition flex items-center justify-between ${
-                    currentUser.id === u.id
-                      ? "bg-blue-600 text-white"
-                      : "text-slate-300 hover:bg-slate-700 hover:text-white"
-                  }`}
+              <div className="max-h-60 overflow-y-auto space-y-1 my-1">
+                {availableUsers.map((u) => (
+                  <button
+                    key={u.id}
+                    onClick={() => {
+                      setCurrentUser(u);
+                      setShowUserMenu(false);
+                    }}
+                    className={`w-full text-left p-2.5 rounded-lg text-xs font-bold transition flex items-center justify-between ${
+                      currentUser.id === u.id
+                        ? "bg-blue-600 text-white"
+                        : "text-slate-300 hover:bg-slate-700 hover:text-white"
+                    }`}
+                  >
+                    <span>{u.name}</span>
+                    <span className="text-[10px] font-mono opacity-75">{u.role}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="pt-2 border-t border-slate-700">
+                <a
+                  href="/users"
+                  onClick={() => setShowUserMenu(false)}
+                  className="block w-full py-2 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white rounded-lg text-xs font-bold text-center transition"
                 >
-                  <span>{u.name}</span>
-                  <span className="text-[10px] font-mono opacity-75">{u.role}</span>
-                </button>
-              ))}
+                  ⚙️ Munkatársak szerkesztése & Új hozzáadása
+                </a>
+              </div>
             </div>
           )}
         </div>
