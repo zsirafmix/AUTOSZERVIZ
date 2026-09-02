@@ -1,0 +1,432 @@
+// Prisma schema for AutoMester Pro ERP
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  phone        String?
+  role         String    @default("MECHANIC") // ADMIN, RECEPTIONIST, MECHANIC, WAREHOUSE, ACCOUNTANT, CUSTOMER
+  pinCode      String?   // Quick PIN for mechanic tablet login
+  avatarUrl    String?
+  isActive     Boolean   @default(true)
+  branchId     String?
+  branch       Branch?   @relation(fields: [branchId], references: [id])
+  workOrders   WorkOrder[] @relation("MechanicWorkOrders")
+  timeLogs     TimeLog[]
+  auditLogs    AuditLog[]
+  appointments Appointment[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Branch {
+  id           String        @id @default(uuid())
+  name         String
+  code         String        @unique // e.g. "BP-01"
+  address      String
+  city         String
+  zip          String
+  phone        String
+  email        String
+  taxNumber    String?
+  isMain       Boolean       @default(false)
+  bayCount     Int           @default(3) // Emelőállások száma
+  users        User[]
+  workOrders   WorkOrder[]
+  parts        Part[]
+  appointments Appointment[]
+  supplierOrders SupplierOrder[]
+  stockMovements StockMovement[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Customer {
+  id           String        @id @default(uuid())
+  name         String
+  companyName  String?
+  isCompany    Boolean       @default(false)
+  taxNumber    String?       // Adószám
+  email        String?
+  phone        String
+  address      String?
+  city         String?
+  zip          String?
+  notes        String?
+  discountRate Float         @default(0) // %
+  vehicles     Vehicle[]
+  workOrders   WorkOrder[]
+  invoices     Invoice[]
+  appointments Appointment[]
+  reminders    Reminder[]
+  communications CommunicationLog[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Vehicle {
+  id               String        @id @default(uuid())
+  customerId       String
+  customer         Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  licensePlate     String        // Rendszám
+  vin              String?       // Alvázszám
+  brand            String        // Márka (pl. Volkswagen)
+  model            String        // Modell (pl. Golf VII)
+  year             Int?          // Évjárat
+  engineCode       String?       // Motorkód
+  displacementCc   Int?          // Hengerűrtartalom (cm3)
+  powerKw          Int?          // Teljesítmény (kW)
+  powerHp          Int?          // Lóerő
+  fuelType         String?       // Petrol, Diesel, Hybrid, Electric, LPG
+  transmission     String?       // Manual, Automatic, DSG
+  color            String?
+  mileage          Int           @default(0) // Aktuális km-óra állás
+  motExpiry        DateTime?     // Műszaki vizsga lejárata
+  insuranceExpiry  DateTime?     // Kötelező biztosítás lejárata
+  tireSize         String?       // Pl. 205/55 R16
+  notes            String?
+  photoUrl         String?
+  documentsJson    String?       // JSON tárolt dokumentumok listája
+  workOrders       WorkOrder[]
+  inspections      Inspection[]
+  appointments     Appointment[]
+  reminders        Reminder[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model WorkOrder {
+  id                 String          @id @default(uuid())
+  orderNumber        String          @unique // Pl. "ML-2026-0001"
+  branchId           String
+  branch             Branch          @relation(fields: [branchId], references: [id])
+  customerId         String
+  customer           Customer        @relation(fields: [customerId], references: [id])
+  vehicleId          String
+  vehicle            Vehicle         @relation(fields: [vehicleId], references: [id])
+  mechanicId         String?
+  mechanic           User?           @relation("MechanicWorkOrders", fields: [mechanicId], references: [id])
+  
+  // Státuszok: CHECK_IN, DIAGNOSTICS, QUOTE_PENDING, QUOTE_APPROVED, PARTS_WAITING, IN_PROGRESS, QUALITY_CHECK, READY, DELIVERED, CANCELLED
+  status             String          @default("CHECK_IN")
+  priority           String          @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+  
+  issueDescription   String          // Ügyfél által jelzett hiba
+  diagnosis          String?         // Bevizsgálás / diagnózis eredménye
+  internalNotes      String?         // Belső szerelői megjegyzések
+  publicNotes        String?         // Ügyfélnek látható összefoglaló
+  
+  mileageAtService   Int?            // Beérkezési km óra állás
+  fuelLevel          Int?            // Üzemanyagszint % (0-100)
+  
+  trackingToken      String          @unique // Élő követő és árajánlat link token
+  
+  // Árajánlat & Jóváhagyás
+  quoteStatus        String          @default("DRAFT") // DRAFT, SENT, ACCEPTED, REJECTED, CALL_REQUESTED
+  quoteAcceptedAt    DateTime?
+  quoteAcceptedBy    String?
+  quoteSignatureData String?
+  quoteRejectReason  String?
+  
+  // Pénzügyi összegek
+  laborCostNet       Float           @default(0)
+  partsCostNet       Float           @default(0)
+  discountPercent    Float           @default(0)
+  totalNet           Float           @default(0)
+  totalVat           Float           @default(0)
+  totalGross         Float           @default(0)
+  
+  estimatedHours     Float           @default(0)
+  actualHours        Float           @default(0)
+  
+  scheduledStart     DateTime?
+  scheduledEnd       DateTime?
+  completedAt        DateTime?
+  deliveredAt        DateTime?
+  
+  // Garancia
+  warrantyPartsMonths Int            @default(12)
+  warrantyLaborMonths Int            @default(6)
+  warrantyNotes      String?
+  
+  items              WorkOrderItem[]
+  inspections        Inspection[]
+  timeLogs           TimeLog[]
+  invoices           Invoice[]
+  stockMovements     StockMovement[]
+  
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+}
+
+model WorkOrderItem {
+  id                  String     @id @default(uuid())
+  workOrderId         String
+  workOrder           WorkOrder  @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  type                String     @default("LABOR") // LABOR, PART, FEE
+  name                String
+  itemCode            String?    // Cikkszám vagy műveleti kód
+  quantity            Float      @default(1)
+  unit                String     @default("db") // db, óra, liter, szett
+  unitPriceNet        Float      @default(0)
+  vatRate             Float      @default(27) // Áfa kulcs %
+  totalGross          Float      @default(0)
+  partId              String?
+  part                Part?      @relation(fields: [partId], references: [id])
+  isCompleted         Boolean    @default(false)
+  warrantyMonths      Int?
+  timeLogs            TimeLog[]
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+}
+
+model Inspection {
+  id                 String     @id @default(uuid())
+  workOrderId        String?
+  workOrder          WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: SetNull)
+  vehicleId          String
+  vehicle            Vehicle    @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  inspectorName      String?
+  odometer           Int?
+  fuelLevelPercent   Int?       @default(50)
+  
+  damagePointsJson   String     @default("[]")
+  checklistJson      String     @default("{}")
+  
+  overallStatus      String     @default("GOOD") // GOOD, WARNING, CRITICAL
+  summaryNotes       String?
+  photosJson         String     @default("[]")
+  signatureCustomer  String?
+  signatureInspector String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+}
+
+model Part {
+  id                 String          @id @default(uuid())
+  branchId           String?
+  branch             Branch?         @relation(fields: [branchId], references: [id])
+  partNumber         String          @unique // Cikkszám
+  oemNumber          String?         // Gyári szám
+  name               String          // Megnevezés
+  category           String?         // Motor, Fék, Futómű, Szűrők, Kenőanyagok, Elektromos
+  manufacturer       String?         // Bosch, Brembo, Mann-Filter, Castrol, stb.
+  purchasePriceNet   Float           @default(0)
+  sellingPriceNet    Float           @default(0)
+  vatRate            Float           @default(27)
+  stockQuantity      Int             @default(0)
+  minStockQuantity   Int             @default(2)
+  shelfLocation      String?         // Pl. "A-02-04"
+  supplierId         String?
+  supplier           Supplier?       @relation(fields: [supplierId], references: [id])
+  notes              String?
+  workOrderItems     WorkOrderItem[]
+  stockMovements     StockMovement[]
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+}
+
+model StockMovement {
+  id            String     @id @default(uuid())
+  partId        String
+  part          Part       @relation(fields: [partId], references: [id], onDelete: Cascade)
+  branchId      String?
+  branch        Branch?    @relation(fields: [branchId], references: [id])
+  type          String     // IN, OUT, ADJUSTMENT, WORK_ORDER
+  quantity      Int
+  previousStock Int
+  newStock      Int
+  unitPriceNet  Float?
+  workOrderId   String?
+  workOrder     WorkOrder? @relation(fields: [workOrderId], references: [id])
+  reason        String?
+  createdByName String?
+  createdAt     DateTime   @default(now())
+}
+
+model Supplier {
+  id             String          @id @default(uuid())
+  name           String          // Unix Autó, Bárdi Autó, Inter Cars, stb.
+  code           String?         // UNIX, BARDI, IC
+  contactPerson  String?
+  email          String?
+  phone          String?
+  website        String?
+  apiType        String?         @default("MANUAL") // UNIX, BARDI, IC, MANUAL
+  discountRate   Float           @default(0) // %
+  notes          String?
+  parts          Part[]
+  orders         SupplierOrder[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model SupplierOrder {
+  id                String    @id @default(uuid())
+  orderNumber       String    @unique // PO-2026-0001
+  supplierId        String
+  supplier          Supplier  @relation(fields: [supplierId], references: [id])
+  branchId          String?
+  branch            Branch?   @relation(fields: [branchId], references: [id])
+  status            String    @default("ORDERED") // DRAFT, ORDERED, SHIPPED, ARRIVED, CANCELLED
+  itemsJson         String    @default("[]") // Lista a megrendelt tételekről
+  totalAmountNet    Float     @default(0)
+  orderedAt         DateTime  @default(now())
+  estimatedDelivery DateTime?
+  arrivedAt         DateTime?
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model TimeLog {
+  id              String         @id @default(uuid())
+  workOrderId     String
+  workOrder       WorkOrder      @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  workerId        String
+  worker          User           @relation(fields: [workerId], references: [id])
+  workOrderItemId String?
+  workOrderItem   WorkOrderItem? @relation(fields: [workOrderItemId], references: [id], onDelete: SetNull)
+  startTime       DateTime       @default(now())
+  endTime         DateTime?
+  durationMinutes Int            @default(0)
+  isRunning       Boolean        @default(true)
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Appointment {
+  id             String    @id @default(uuid())
+  branchId       String
+  branch         Branch    @relation(fields: [branchId], references: [id])
+  customerId     String?
+  customer       Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  vehicleId      String?
+  vehicle        Vehicle?  @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  mechanicId     String?
+  mechanic       User?     @relation(fields: [mechanicId], references: [id], onDelete: SetNull)
+  bayNumber      Int       @default(1)
+  
+  title          String
+  serviceType    String    @default("GENERAL_SERVICE") // OIL_CHANGE, BRAKE, MOT, DIAGNOSTICS, TIRE, GENERAL_SERVICE
+  clientName     String?
+  clientPhone    String?
+  clientEmail    String?
+  vehiclePlate   String?
+  
+  startTime      DateTime
+  endTime        DateTime
+  status         String    @default("CONFIRMED") // SCHEDULED, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW
+  customerNotes  String?
+  internalNotes  String?
+  isOnlineBooking Boolean  @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Invoice {
+  id              String     @id @default(uuid())
+  invoiceNumber   String     @unique // SZ-2026-0001
+  workOrderId     String?
+  workOrder       WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: SetNull)
+  customerId      String
+  customer        Customer   @relation(fields: [customerId], references: [id])
+  
+  type            String     @default("INVOICE") // INVOICE, PROFORMA (díjbekérő), ADVANCE, CANCEL
+  status          String     @default("PAID") // DRAFT, ISSUED, PAID, OVERDUE, CANCELLED
+  paymentMethod   String     @default("CASH") // CASH, CARD, TRANSFER, SZAMPAY
+  
+  issueDate       DateTime   @default(now())
+  fulfillmentDate DateTime   @default(now())
+  dueDate         DateTime   @default(now())
+  paidDate        DateTime?
+  
+  currency        String     @default("HUF")
+  totalNet        Float      @default(0)
+  totalVat        Float      @default(0)
+  totalGross      Float      @default(0)
+  
+  itemsJson       String     @default("[]")
+  billingoId      String?
+  szamlazzHuId    String?
+  pdfUrl          String?
+  notes           String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+model Reminder {
+  id                 String    @id @default(uuid())
+  vehicleId          String
+  vehicle            Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  customerId         String
+  customer           Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type               String    // OIL_CHANGE, MOT_EXPIRY, TIMING_BELT, BRAKE_FLUID, AC_SERVICE, SEASONAL_TIRE, CUSTOM
+  title              String
+  targetDate         DateTime?
+  targetMileage      Int?
+  status             String    @default("PENDING") // PENDING, SENT, COMPLETED, DISMISSED
+  lastSentAt         DateTime?
+  notificationMethod String    @default("EMAIL") // EMAIL, SMS, BOTH
+  notes              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName    String   @default("Rendszer")
+  action      String   // CREATE, UPDATE, DELETE, STATUS_CHANGE, PRICE_CHANGE, STOCK_CHANGE, LOGIN, APPROVAL
+  entityType  String   // WorkOrder, Part, Customer, Vehicle, Invoice, Setting, etc.
+  entityId    String?
+  oldValue    String?
+  newValue    String?
+  description String
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+}
+
+model CommunicationLog {
+  id          String    @id @default(uuid())
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type        String    @default("SMS") // SMS, EMAIL, PHONE_CALL, IN_PERSON
+  direction   String    @default("OUTBOUND") // INBOUND, OUTBOUND
+  subject     String?
+  content     String
+  sentByName  String?
+  status      String    @default("SENT") // SENT, DELIVERED, FAILED
+  createdAt   DateTime  @default(now())
+}
+
+model FeatureFlag {
+  id          String   @id @default(uuid())
+  key         String   @unique // crm, vehicles, calendar, work_orders, inspections, quotes, inventory, suppliers, time_tracking, invoicing, reminders, customer_portal, live_tracking, warranties, multi_branch, ai_assistant
+  label       String
+  description String
+  category    String   // core, workshop, finance, smart
+  isEnabled   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  label     String
+  group     String   @default("GENERAL")
+  updatedAt DateTime @updatedAt
+}
