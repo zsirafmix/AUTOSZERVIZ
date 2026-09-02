@@ -42,4 +42,4 @@ USER nextjs
 
 EXPOSE 3000
 
-CMD ["npm", "run", "deploy-start"]
+CMD ["npm", "start"]

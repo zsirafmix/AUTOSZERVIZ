@@ -5,9 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "deploy-start": "npx prisma db push && npx prisma db seed && next start"
+    "start": "npx prisma db push && npx prisma db seed && next start",
+    "lint": "eslint"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

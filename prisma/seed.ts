@@ -5,6 +5,13 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Seeding database with AutoMester Pro ERP data...");
 
+  const existingUsers = await prisma.user.count();
+  if (existingUsers > 0) {
+    console.log("Database already contains data, skipping seed to prevent duplicates.");
+    return;
+  }
+
+
   // 1. Feature Flags
   const featureFlags = [
     { key: "crm", label: "Ügyfélkezelés (CRM)", description: "Ügyféltörzs, cégadatok, kommunikációs előzmények és kedvezmények.", category: "core", sortOrder: 1 },
