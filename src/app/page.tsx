@@ -15,24 +15,28 @@ import {
   Calendar,
   Users,
   Package,
-  ArrowRight,
+  Truck,
+  Bell,
+  Settings,
   Sparkles,
   QrCode,
   Building2,
   Plus,
   ShieldCheck,
   Activity,
-  ChevronRight
+  ArrowRight,
+  ClipboardList,
+  UserCircle,
+  FileText
 } from "lucide-react";
 import QRScannerModal from "@/components/QRScannerModal";
 import AIAssistantModal from "@/components/AIAssistantModal";
 
-export default function DashboardPage() {
+export default function MetroDashboardPage() {
   const { isFeatureEnabled } = useFeatureFlags();
   const { currentBranch, currentUser } = useWorkshop();
 
   const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
 
@@ -46,295 +50,311 @@ export default function DashboardPage() {
         }
       } catch (e) {
         console.error(e);
-      } finally {
-        setLoading(false);
       }
     }
     loadStats();
   }, [currentBranch]);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "CHECK_IN":
-        return <span className="px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30 text-[10px] font-bold inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>Bejelentkezett</span>;
-      case "IN_PROGRESS":
-        return <span className="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-bold inline-flex items-center gap-1 animate-pulse"><span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>Javítás alatt</span>;
-      case "READY":
-        return <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Kész / Átadásra vár</span>;
-      case "QUOTE_PENDING":
-        return <span className="px-2.5 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[10px] font-bold inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>Ajánlatra vár</span>;
-      case "DELIVERED":
-        return <span className="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Átadva / Lezárva</span>;
-      default:
-        return <span className="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 text-[10px]">{status}</span>;
-    }
-  };
-
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Hero Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-850 to-blue-950 border border-slate-700/60 p-6 sm:p-8 shadow-2xl">
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute bottom-0 left-1/3 -mb-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="space-y-8 max-w-7xl mx-auto py-6 px-4 sm:px-6">
+      {/* Metro Title Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b-2 border-slate-700">
+        <div>
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
+            AutoMester Műhelyközpont
+          </h1>
+          <p className="text-base sm:text-xl text-slate-300 font-semibold mt-2">
+            Érintse meg vagy kattintson a kívánt funkció csempéjére a megnyitáshoz.
+          </p>
+        </div>
 
-        <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-300 text-xs font-bold">
-              <Building2 className="w-3.5 h-3.5 text-amber-400" />
-              <span>{currentBranch?.name || "Központi Szervizműhely"}</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setQrModalOpen(true)}
+            className="metro-tile bg-slate-800 hover:bg-slate-750 text-white px-6 py-3.5 rounded-xl font-bold text-base border-2 border-slate-600 flex items-center gap-2.5 shadow-lg"
+          >
+            <QrCode className="w-6 h-6 text-amber-400" />
+            <span>QR Kód Olvasó</span>
+          </button>
+
+          {isFeatureEnabled("ai_assistant") && (
+            <button
+              onClick={() => setAiModalOpen(true)}
+              className="metro-tile bg-gradient-to-r from-purple-700 to-indigo-700 text-white px-6 py-3.5 rounded-xl font-bold text-base flex items-center gap-2.5 shadow-lg border-2 border-purple-500"
+            >
+              <Sparkles className="w-6 h-6 text-yellow-300" />
+              <span>AI Műhely Asszisztens</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* WINDOWS 8 METRO TILES GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        
+        {/* 1. MUNKAFELVEVŐ / RECEPCIÓ (Nagy Zöld Csempe) */}
+        <Link
+          href="/reception"
+          className="metro-tile bg-emerald-600 text-white p-7 rounded-2xl shadow-2xl flex flex-col justify-between min-h-[220px] group col-span-1 sm:col-span-2"
+        >
+          <div className="flex items-center justify-between">
+            <div className="p-3 bg-black/20 rounded-2xl">
+              <Plus className="w-12 h-12 text-white" />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-              Szerviz Műveleti & Vezetői Irányítópult
-            </h1>
-            <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Üdvözöljük, <span className="text-white font-bold">{currentUser?.name}</span>! Valós idejű műhelykihasználtság, pénzügyi mutatók, beérkező és kész járművek áttekintése.
+            <span className="px-4 py-1.5 bg-black/30 rounded-xl text-sm font-black uppercase tracking-wider">
+              1 Perces Felvétel
+            </span>
+          </div>
+
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
+              ÚJ JÁRMŰ & MUNKALAP FELVÉTEL
+            </h2>
+            <p className="text-base text-emerald-100 font-semibold mt-1.5">
+              Munkafelvevő recepció: Ügyféladatok, automatikus alvázszám (VIN) dekóder és azonnali indítás.
             </p>
           </div>
+        </Link>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setQrModalOpen(true)}
-              className="px-4 py-2.5 bg-slate-850 hover:bg-slate-800 text-slate-200 hover:text-white rounded-xl text-xs font-bold border border-slate-700/80 flex items-center gap-2 shadow-md hover:scale-105 transition-all"
-            >
-              <QrCode className="w-4 h-4 text-blue-400" />
-              <span>QR Munkalap Olvasó</span>
-            </button>
-
-            {isFeatureEnabled("ai_assistant") && (
-              <button
-                onClick={() => setAiModalOpen(true)}
-                className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-600/30 hover:scale-105 transition-all"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>AI Műhely Asszisztens</span>
-              </button>
-            )}
-
-            <Link
-              href="/reception"
-              className="btn-gradient-primary px-5 py-2.5 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-xl shadow-blue-600/30 hover:scale-105 transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Új Munkalap Nyitása</span>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Active Cars */}
-        <div className="glass-panel glass-panel-hover rounded-3xl p-5 shadow-xl relative overflow-hidden">
+        {/* 2. MŰHELY TABLET MÓD (Nagy Narancssárga Csempe) */}
+        <Link
+          href="/workshop"
+          className="metro-tile bg-orange-600 text-white p-7 rounded-2xl shadow-2xl flex flex-col justify-between min-h-[220px] group col-span-1 sm:col-span-2"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Bent lévő autók</span>
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shadow-sm">
-              <Car className="w-5 h-5" />
+            <div className="p-3 bg-black/20 rounded-2xl">
+              <Wrench className="w-12 h-12 text-white" />
             </div>
+            <span className="px-4 py-1.5 bg-black/30 rounded-xl text-sm font-black uppercase tracking-wider">
+              Szerelőknek (Tablet)
+            </span>
           </div>
-          <div className="text-3xl font-black text-white mt-3 font-mono">
-            {stats?.activeCarsInShop ?? 2} <span className="text-xs font-sans font-normal text-slate-400">db autó</span>
-          </div>
-          <div className="text-xs text-blue-400 mt-2.5 flex items-center gap-1.5 font-semibold">
-            <span className="w-2 h-2 rounded-full bg-blue-400"></span>
-            <span>{stats?.inProgressCount ?? 1} javítás alatt</span> • <span className="text-emerald-400">{stats?.readyForPickup ?? 1} kész</span>
-          </div>
-        </div>
 
-        {/* Revenue */}
-        <div className="glass-panel glass-panel-hover rounded-3xl p-5 shadow-xl relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Kiegyenlített forgalom</span>
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-sm">
-              <TrendingUp className="w-5 h-5" />
-            </div>
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
+              MŰHELY TABLET & STOPPERÓRA
+            </h2>
+            <p className="text-base text-orange-100 font-semibold mt-1.5">
+              Érintőképernyős nagygombos szerelői felület, élő Start/Stop időmérő, állapotfelmérő checklist.
+            </p>
           </div>
-          <div className="text-3xl font-black text-emerald-400 mt-3 font-mono">
-            {((stats?.totalGrossRevenue ?? 171704)).toLocaleString()} <span className="text-xs font-sans font-normal text-slate-400">Ft</span>
-          </div>
-          <div className="text-xs text-slate-400 mt-2.5 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>Nettó: {((stats?.totalNetRevenue ?? 135200)).toLocaleString()} Ft</span>
-          </div>
-        </div>
+        </Link>
 
-        {/* Pending Receivables */}
-        <div className="glass-panel glass-panel-hover rounded-3xl p-5 shadow-xl relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Függő számlák & Kintlévőség</span>
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-sm">
-              <Receipt className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-amber-400 mt-3 font-mono">
-            {(stats?.pendingPaymentGross ?? 0).toLocaleString()} <span className="text-xs font-sans font-normal text-slate-400">Ft</span>
-          </div>
-          <div className="text-xs text-amber-300 mt-2.5 flex items-center gap-1.5 font-semibold">
-            <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-            <span>{stats?.quotePendingCount ?? 0} db árajánlat jóváhagyásra vár</span>
-          </div>
-        </div>
-
-        {/* Inventory alerts */}
-        <div className="glass-panel glass-panel-hover rounded-3xl p-5 shadow-xl relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Raktár & Alkatrészek</span>
-            <div className="w-10 h-10 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shadow-sm">
-              <Package className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-white mt-3 font-mono">
-            {stats?.lowStockCount ?? 0} <span className="text-xs font-sans font-normal text-slate-400">db alacsony készlet</span>
-          </div>
-          <div className="text-xs text-purple-400 mt-2.5 flex items-center gap-1 font-semibold">
-            <Link href="/inventory" className="hover:underline flex items-center gap-1">
-              Raktárkészlet kezelése <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Active Work Orders Card */}
-        <div className="lg:col-span-2 glass-panel rounded-3xl p-6 shadow-2xl space-y-5">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-800/80">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                <Wrench className="w-5 h-5" />
+        {/* 3. MUNKALAPOK (Kék Csempe) */}
+        {isFeatureEnabled("work_orders") && (
+          <Link
+            href="/work-orders"
+            className="metro-tile bg-blue-600 text-white p-6 rounded-2xl shadow-xl flex flex-col justify-between min-h-[200px]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="p-2.5 bg-black/20 rounded-xl">
+                <ClipboardList className="w-9 h-9" />
               </div>
-              <h2 className="font-bold text-lg text-white">
-                Aktuális Munkalapok a Műhelyben
-              </h2>
+              <span className="text-4xl font-black font-mono">
+                {stats?.activeCarsInShop ?? 0}
+              </span>
             </div>
-
-            <Link
-              href="/work-orders"
-              className="text-xs text-blue-400 hover:text-blue-300 font-bold flex items-center gap-1.5 transition"
-            >
-              Összes munkalap megnyitása <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="text-slate-400 uppercase text-[10px] bg-slate-950/60 font-bold tracking-wider">
-                <tr>
-                  <th className="p-3.5 rounded-l-xl">Munkalapszám</th>
-                  <th className="p-3.5">Jármű / Rendszám</th>
-                  <th className="p-3.5">Ügyfél</th>
-                  <th className="p-3.5">Státusz</th>
-                  <th className="p-3.5">Bruttó összeg</th>
-                  <th className="p-3.5 text-right rounded-r-xl">Művelet</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {stats?.recentWorkOrders && stats.recentWorkOrders.length > 0 ? (
-                  stats.recentWorkOrders.map((wo: any) => (
-                    <tr key={wo.id} className="hover:bg-slate-800/40 transition group">
-                      <td className="p-3.5 font-mono font-bold text-blue-400 group-hover:text-blue-300">
-                        {wo.orderNumber}
-                      </td>
-                      <td className="p-3.5 font-bold text-white">
-                        <div>{wo.vehicle?.licensePlate}</div>
-                        <div className="text-[10px] font-normal text-slate-400">{wo.vehicle?.brand} {wo.vehicle?.model}</div>
-                      </td>
-                      <td className="p-3.5 text-slate-300 font-medium">
-                        {wo.customer?.name}
-                      </td>
-                      <td className="p-3.5">
-                        {getStatusBadge(wo.status)}
-                      </td>
-                      <td className="p-3.5 font-mono font-bold text-emerald-400">
-                        {wo.totalGross ? `${wo.totalGross.toLocaleString()} Ft` : "-"}
-                      </td>
-                      <td className="p-3.5 text-right">
-                        <Link
-                          href={`/work-orders/${wo.id}`}
-                          className="px-3.5 py-1.5 bg-blue-600/20 hover:bg-blue-600 border border-blue-500/40 hover:text-white text-blue-300 rounded-xl font-bold text-[11px] transition inline-flex items-center gap-1 shadow-sm"
-                        >
-                          <span>Megnyitás</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-500 italic">
-                      Nincsenek aktív munkalapok.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Quick Access Work Environments */}
-        <div className="space-y-5">
-          <div className="glass-panel rounded-3xl p-6 shadow-2xl space-y-4">
-            <h3 className="font-bold text-base text-white flex items-center gap-2">
-              <Activity className="w-4 h-4 text-blue-400" />
-              Munkakörnyezetek
-            </h3>
-
-            <div className="space-y-3">
-              <Link
-                href="/reception"
-                className="block p-4 rounded-2xl bg-slate-950/80 hover:bg-slate-900 border border-slate-800 hover:border-blue-500/60 transition-all duration-300 group shadow-md"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 font-bold text-sm text-slate-100 group-hover:text-blue-400 transition">
-                    <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                      <Users className="w-4 h-4" />
-                    </div>
-                    <span>Recepció & Munkafelvevő</span>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-blue-400 transform group-hover:translate-x-1 transition" />
-                </div>
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                  1 perces gyors járműfelvétel, VIN dekóder, azonnali munkalap nyitás.
-                </p>
-              </Link>
-
-              <Link
-                href="/workshop"
-                className="block p-4 rounded-2xl bg-slate-950/80 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/60 transition-all duration-300 group shadow-md"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 font-bold text-sm text-slate-100 group-hover:text-amber-400 transition">
-                    <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                      <Wrench className="w-4 h-4" />
-                    </div>
-                    <span>Műhely Tablet (Szerelőknek)</span>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 transform group-hover:translate-x-1 transition" />
-                </div>
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                  Érintőképernyős nagygombos stopper, sérüléstérkép és checklist.
-                </p>
-              </Link>
-
-              <Link
-                href="/portal"
-                className="block p-4 rounded-2xl bg-slate-950/80 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/60 transition-all duration-300 group shadow-md"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 font-bold text-sm text-slate-100 group-hover:text-emerald-400 transition">
-                    <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      <Car className="w-4 h-4" />
-                    </div>
-                    <span>Ügyfél Portál & Élő Státusz</span>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transform group-hover:translate-x-1 transition" />
-                </div>
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                  Saját autók, digitális szervizkönyv, számlák és online nyomkövető.
-                </p>
-              </Link>
+            <div>
+              <h3 className="text-2xl font-black">Munkalapok</h3>
+              <p className="text-sm text-blue-100 font-semibold mt-1">Folyamatban lévő és kész szervizek</p>
             </div>
+          </Link>
+        )}
+
+        {/* 4. ÜGYFÉLNYILVÁNTARTÁS CRM (Lila Csempe) */}
+        {isFeatureEnabled("crm") && (
+          <Link
+            href="/customers"
+            className="metro-tile bg-purple-700 text-white p-6 rounded-2xl shadow-xl flex flex-col justify-between min-h-[200px]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="p-2.5 bg-black/20 rounded-xl">
+                <Users className="w-9 h-9" />
+              </div>
+              <span className="text-sm px-3 py-1 bg-black/30 rounded-lg font-black uppercase">CRM</span>
+            </div>
+            <div>
+              <h3 className="text-2xl font-black">Ügyfelek</h3>
+              <p className="text-sm text-purple-100 font-semibold mt-1">Cégadatok, adószámok, előzmények</p>
+            </div>
+          </Link>
+        )}
+
+        {/* 5. JÁRMŰVEK & SZERVIZKÖNYV (Indigó Csempe) */}
+        {isFeatureEnabled("vehicles") && (
+          <Link
+            href="/vehicles"
+            className="metro-tile bg-indigo-700 text-white p-6 rounded-2xl shadow-xl flex flex-col justify-between min-h-[200px]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="p-2.5 bg-black/20 rounded-xl">
+                <Car className="w-9 h-9" />
+              </div>
+              <span className="text-sm px-3 py-1 bg-black/30 rounded-lg font-black uppercase">Flotta</span>
+            </div>
+            <div>
+              <h3 className="text-2xl font-black">Gépjárművek</h3>
+              <p className="text-sm text-indigo-100 font-semibold mt-1">Alvázszámok, műszaki, szervizkönyv</p>
+            </div>
+          </Link>
+        )}
+
+        {/* 6. NAPTÁR & EMELŐK (Teal Csempe) */}
+        {isFeatureEnabled("calendar") && (
+          <Link
+            href="/calendar"
+            className="metro-tile bg-teal-600 text-white p-6 rounded-2xl shadow-xl flex flex-col justify-between min-h-[200px]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="p-2.5 bg-black/20 rounded-xl">
+                <Calendar className="w-9 h-9" />
+              </div>
+              <span className="text-sm px-3 py-1 bg-black/30 rounded-lg font-black uppercase">Emelők</span>
+            </div>
+            <div>
+              <h3 className="text-2xl font-black">Naptár & Emelők</h3>
+              <p className="text-sm text-teal-100 font-semibold mt-1">Időpontfoglalás és műhelybeosztás</p>
+            </div>
+          </Link>
+        )}
+
+        {/* 7. RAKTÁR & ALKATRÉSZEK (Borostyán Csempe) */}
+        {isFeatureEnabled("inventory") && (
+          <Link
+            href="/inventory"
+            className="metro-tile bg-amber-600 text-white p-6 rounded-2xl shadow-xl flex flex-col justify-between min-h-[200px]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="p-2.5 bg-black/20 rounded-xl">
+                <Package className="w-9 h-9" />
+              </div>
+              <span className="text-4xl font-black font-mono">
+                {stats?.lowStockCount ?? 0}
+              </span>
+            </div>
+            <div>
+              <h3 className="text-2xl font-black">Raktárkészlet</h3>
+              <p className="text-sm text-amber-100 font-semibold mt-1">Cikkszámok, készletszintek, polchelyek</p>
+            </div>
+          </Link>
+        )}
+
+        {/* 8. BESZÁLLÍTÓK (Unix, Bárdi, IC) (Ciánkék Csempe) */}
+        {isFeatureEnabled("suppliers") && (
+          <Link
+            href="/suppliers"
+            className="metro-tile bg-cyan-700 text-white p-6 rounded-2xl shadow-xl flex flex-col justify-between min-h-[200px]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="p-2.5 bg-black/20 rounded-xl">
+                <Truck className="w-9 h-9" />
+              </div>
+              <span className="text-sm px-3 py-1 bg-black/30 rounded-lg font-black uppercase">Beszerzés</span>
+            </div>
+            <div>
+              <h3 className="text-2xl font-black">Beszállítók</h3>
+              <p className="text-sm text-cyan-100 font-semibold mt-1">Unix, Bárdi, Inter Cars rendelések</p>
+            </div>
+          </Link>
+        )}
+
+        {/* 9. MUNKAIDŐ & STOPPER (Piros Csempe) */}
+        {isFeatureEnabled("time_tracking") && (
+          <Link
+            href="/time-tracking"
+            className="metro-tile bg-rose-700 text-white p-6 rounded-2xl shadow-xl flex flex-col justify-between min-h-[200px]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="p-2.5 bg-black/20 rounded-xl">
+                <Clock className="w-9 h-9" />
+              </div>
+              <span className="text-sm px-3 py-1 bg-black/30 rounded-lg font-black uppercase">Időmérés</span>
+            </div>
+            <div>
+              <h3 className="text-2xl font-black">Munkaidő Napló</h3>
+              <p className="text-sm text-rose-100 font-semibold mt-1">Szerelői munkaórák és stopperek</p>
+            </div>
+          </Link>
+        )}
+
+        {/* 10. SZÁMLÁZÁS & PÉNZÜGYEK (Fukszia Csempe) */}
+        {isFeatureEnabled("invoicing") && (
+          <Link
+            href="/invoicing"
+            className="metro-tile bg-fuchsia-700 text-white p-6 rounded-2xl shadow-xl flex flex-col justify-between min-h-[200px]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="p-2.5 bg-black/20 rounded-xl">
+                <Receipt className="w-9 h-9" />
+              </div>
+              <span className="text-sm px-3 py-1 bg-black/30 rounded-lg font-black uppercase">Pénzügy</span>
+            </div>
+            <div>
+              <h3 className="text-2xl font-black">Számlázás</h3>
+              <p className="text-sm text-fuchsia-100 font-semibold mt-1">Számlák, díjbekérők, bevételek</p>
+            </div>
+          </Link>
+        )}
+
+        {/* 11. SZERVIZEMLÉKEZTETŐK (Sárga Csempe) */}
+        {isFeatureEnabled("reminders") && (
+          <Link
+            href="/reminders"
+            className="metro-tile bg-yellow-600 text-white p-6 rounded-2xl shadow-xl flex flex-col justify-between min-h-[200px]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="p-2.5 bg-black/20 rounded-xl">
+                <Bell className="w-9 h-9" />
+              </div>
+              <span className="text-sm px-3 py-1 bg-black/30 rounded-lg font-black uppercase">Automata</span>
+            </div>
+            <div>
+              <h3 className="text-2xl font-black">Emlékeztetők</h3>
+              <p className="text-sm text-yellow-100 font-semibold mt-1">Olajcsere (1év/15e km), műszaki</p>
+            </div>
+          </Link>
+        )}
+
+        {/* 12. ÜGYFÉL PORTÁL (Smaragdzöld Csempe) */}
+        {isFeatureEnabled("customer_portal") && (
+          <Link
+            href="/portal"
+            className="metro-tile bg-emerald-700 text-white p-6 rounded-2xl shadow-xl flex flex-col justify-between min-h-[200px]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="p-2.5 bg-black/20 rounded-xl">
+                <UserCircle className="w-9 h-9" />
+              </div>
+              <span className="text-sm px-3 py-1 bg-black/30 rounded-lg font-black uppercase">Ügyfél</span>
+            </div>
+            <div>
+              <h3 className="text-2xl font-black">Ügyfél Portál</h3>
+              <p className="text-sm text-emerald-100 font-semibold mt-1">Saját járművek & szervizkönyv</p>
+            </div>
+          </Link>
+        )}
+
+        {/* 13. RENDSZERBEÁLLÍTÁSOK & FEATURE FLAGS (Sötétszürke Dupla Csempe) */}
+        <Link
+          href="/settings"
+          className="metro-tile bg-slate-700 text-white p-7 rounded-2xl shadow-2xl flex flex-col justify-between min-h-[200px] col-span-1 sm:col-span-2"
+        >
+          <div className="flex items-center justify-between">
+            <div className="p-3 bg-black/20 rounded-2xl">
+              <Settings className="w-10 h-10 text-white" />
+            </div>
+            <span className="px-4 py-1.5 bg-black/30 rounded-xl text-sm font-black uppercase tracking-wider">
+              16 Modul Kapcsoló
+            </span>
           </div>
-        </div>
+          <div>
+            <h3 className="text-2xl sm:text-3xl font-black">Rendszerbeállítások & Modulok</h3>
+            <p className="text-base text-slate-200 font-semibold mt-1">
+              Egyenként ki- és bekapcsolhatja az összes modult, módosíthatja az árakat és a telephelyeket.
+            </p>
+          </div>
+        </Link>
+
       </div>
 
       <QRScannerModal
@@ -344,7 +364,7 @@ export default function DashboardPage() {
           if (code.startsWith("ML-")) {
             window.location.href = `/work-orders`;
           } else {
-            alert(`Beolvasott kód: ${code}`);
+            alert(`Beolvasott azonosító: ${code}`);
           }
         }}
       />

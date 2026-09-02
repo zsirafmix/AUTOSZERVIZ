@@ -17,7 +17,8 @@ import {
   FileText,
   KeyRound,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  Plus
 } from "lucide-react";
 import AIAssistantModal from "@/components/AIAssistantModal";
 
@@ -36,9 +37,9 @@ export default function ReceptionPage() {
   const [vin, setVin] = useState("");
   const [brand, setBrand] = useState("");
   const [model, setModel] = useState("");
-  const [year, setYear] = useState("2019");
+  const [year, setYear] = useState("2020");
   const [fuelType, setFuelType] = useState("Diesel");
-  const [mileage, setMileage] = useState("145000");
+  const [mileage, setMileage] = useState("");
 
   const [issueDescription, setIssueDescription] = useState("");
   const [priority, setPriority] = useState("NORMAL");
@@ -74,7 +75,7 @@ export default function ReceptionPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName || !customerPhone || !licensePlate || !issueDescription) {
-      alert("Kérjük töltse ki a kötelező mezőket!");
+      alert("Kérjük töltse ki a kötelező mezőket: Ügyfélnév, Telefonszám, Rendszám, Hibaleírás!");
       return;
     }
 
@@ -99,13 +100,13 @@ export default function ReceptionPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerId: customer.id,
-          licensePlate,
-          vin,
+          licensePlate: licensePlate.toUpperCase().trim(),
+          vin: vin ? vin.toUpperCase().trim() : null,
           brand: brand || "Általános Márka",
           model: model || "Típus",
           year: Number(year),
           fuelType,
-          mileage: Number(mileage),
+          mileage: mileage ? Number(mileage) : 0,
         }),
       });
       const vehicle = await vehRes.json();
@@ -119,7 +120,7 @@ export default function ReceptionPage() {
           vehicleId: vehicle.id,
           issueDescription,
           priority,
-          mileageAtService: Number(mileage),
+          mileageAtService: mileage ? Number(mileage) : 0,
           estimatedHours: Number(estimatedHours),
           status: "CHECK_IN",
         }),
@@ -136,21 +137,19 @@ export default function ReceptionPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto animate-in fade-in duration-300">
-      {/* Header */}
-      <div className="glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-8 max-w-5xl mx-auto py-6 px-4">
+      {/* Metro Header Banner */}
+      <div className="bg-emerald-600 text-white p-8 rounded-3xl shadow-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div>
-          <div className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-1">
-            Recepció & Munkafelvevő
-          </div>
-          <h1 className="text-3xl font-black text-white flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shadow-md">
-              <ClipboardList className="w-6 h-6" />
-            </div>
-            Gyors Járműfelvétel & Munkalap Nyitás
+          <span className="px-3 py-1 bg-black/30 rounded-lg text-xs font-black uppercase tracking-wider">
+            Munkafelvevő Recepció
+          </span>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight mt-2 flex items-center gap-3">
+            <Plus className="w-9 h-9" />
+            Gyors Járműfelvétel & Új Munkalap
           </h1>
-          <p className="text-xs text-slate-400 mt-1 max-w-xl">
-            1 perces bejelentkezés: Ügyféladatok, automatikus VIN dekóderes autófelvétel és azonnali munkalap készítés.
+          <p className="text-base text-emerald-100 font-semibold mt-1 max-w-2xl">
+            1 perces bejelentkezés: Adja meg az ügyfél és a gépjármű adatait a munkalap azonnali megnyitásához.
           </p>
         </div>
 
@@ -158,70 +157,68 @@ export default function ReceptionPage() {
           <button
             type="button"
             onClick={() => setAiModalOpen(true)}
-            className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-600/30 hover:scale-105 transition-all"
+            className="bg-slate-900 hover:bg-black text-white px-6 py-3.5 rounded-2xl font-black text-sm flex items-center gap-2.5 shadow-xl border-2 border-emerald-400 shrink-0"
           >
-            <Sparkles className="w-4 h-4" />
-            <span>AI Hibaleírás Segéd</span>
+            <Sparkles className="w-5 h-5 text-yellow-300" />
+            <span>AI Szöveg Segéd</span>
           </button>
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Step 1: Customer Info */}
-        <div className="glass-panel rounded-3xl p-6 sm:p-8 shadow-xl space-y-5">
-          <h2 className="text-base font-bold text-white flex items-center gap-2.5 pb-4 border-b border-slate-800">
-            <div className="w-7 h-7 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold">
-              1
-            </div>
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Step 1: Customer Data */}
+        <div className="bg-slate-850 border-2 border-slate-700 rounded-3xl p-7 shadow-xl space-y-6">
+          <h2 className="text-2xl font-black text-white flex items-center gap-3 pb-4 border-b-2 border-slate-700">
+            <span className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center text-white text-lg font-black">1</span>
             <span>Ügyfélkapcsolati Adatok</span>
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-slate-300 font-semibold mb-2">Ügyfél neve / Cégnév *</label>
+              <label className="block text-slate-200 font-bold text-base mb-2">Ügyfél neve / Cégnév *</label>
               <input
                 type="text"
                 required
                 placeholder="Pl. Kovács János"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full bg-slate-950/90 border border-slate-700/80 rounded-xl p-3 text-xs text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:outline-none transition"
+                className="w-full metro-input font-bold text-base"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-2">Telefonszám *</label>
+              <label className="block text-slate-200 font-bold text-base mb-2">Telefonszám *</label>
               <input
                 type="tel"
                 required
-                placeholder="Pl. +36 30 123 4567"
+                placeholder="+36 30 123 4567"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
-                className="w-full bg-slate-950/90 border border-slate-700/80 rounded-xl p-3 text-xs font-mono text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:outline-none transition"
+                className="w-full metro-input font-mono font-bold text-base"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-2">E-mail cím</label>
+              <label className="block text-slate-200 font-bold text-base mb-2">E-mail cím</label>
               <input
                 type="email"
-                placeholder="ugyfel@pelda.hu"
+                placeholder="ugyfel@email.hu"
                 value={customerEmail}
                 onChange={(e) => setCustomerEmail(e.target.value)}
-                className="w-full bg-slate-950/90 border border-slate-700/80 rounded-xl p-3 text-xs text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:outline-none transition"
+                className="w-full metro-input text-base"
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-4 pt-2">
-            <label className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-300 font-semibold">
+          <div className="flex flex-wrap items-center gap-4 pt-2">
+            <label className="flex items-center gap-3 cursor-pointer text-base text-slate-200 font-bold">
               <input
                 type="checkbox"
                 checked={isCompany}
                 onChange={(e) => setIsCompany(e.target.checked)}
-                className="rounded bg-slate-950 border-slate-700 text-blue-600 focus:ring-0 w-4 h-4"
+                className="w-6 h-6 rounded bg-slate-900 border-slate-600 text-emerald-600 focus:ring-0"
               />
-              <span>Céges ügyfél (Adószám rögzítése)</span>
+              <span>Céges számlát kér (Adószám megadása)</span>
             </label>
 
             {isCompany && (
@@ -230,93 +227,91 @@ export default function ReceptionPage() {
                 placeholder="Adószám: 12345678-2-42"
                 value={companyTaxNumber}
                 onChange={(e) => setCompanyTaxNumber(e.target.value)}
-                className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono w-52"
+                className="metro-input font-mono font-bold w-64 text-base"
               />
             )}
           </div>
         </div>
 
-        {/* Step 2: Vehicle Info & VIN Decoder */}
-        <div className="glass-panel rounded-3xl p-6 sm:p-8 shadow-xl space-y-5">
-          <h2 className="text-base font-bold text-white flex items-center gap-2.5 pb-4 border-b border-slate-800">
-            <div className="w-7 h-7 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold">
-              2
-            </div>
-            <span>Jármű Adatok & Automatikus VIN Dekóder</span>
+        {/* Step 2: Vehicle Data & VIN */}
+        <div className="bg-slate-850 border-2 border-slate-700 rounded-3xl p-7 shadow-xl space-y-6">
+          <h2 className="text-2xl font-black text-white flex items-center gap-3 pb-4 border-b-2 border-slate-700">
+            <span className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white text-lg font-black">2</span>
+            <span>Gépjármű Adatok & VIN Lekérdező</span>
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             <div>
-              <label className="block text-slate-300 font-semibold mb-2">Rendszám *</label>
+              <label className="block text-slate-200 font-bold text-base mb-2">Rendszám *</label>
               <input
                 type="text"
                 required
                 placeholder="AA-BC-123"
                 value={licensePlate}
                 onChange={(e) => setLicensePlate(e.target.value.toUpperCase())}
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3 text-xs font-mono font-black text-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:outline-none uppercase tracking-wider"
+                className="w-full metro-input font-mono font-black text-xl text-yellow-400 uppercase tracking-widest"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-2">Alvázszám (VIN)</label>
-              <div className="flex gap-1.5">
+              <label className="block text-slate-200 font-bold text-base mb-2">Alvázszám (VIN)</label>
+              <div className="flex gap-2">
                 <input
                   type="text"
                   placeholder="17 jegyű VIN"
                   value={vin}
                   onChange={(e) => setVin(e.target.value.toUpperCase())}
-                  className="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3 text-xs font-mono text-white focus:ring-2 focus:ring-blue-500/50 uppercase"
+                  className="w-full metro-input font-mono uppercase text-sm"
                 />
                 <button
                   type="button"
                   onClick={handleVinLookup}
                   disabled={vinLoading || !vin}
-                  className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold disabled:opacity-50 shrink-0 shadow-md"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-black text-xs disabled:opacity-50 shrink-0 shadow"
                 >
-                  {vinLoading ? "..." : "Lekérés"}
+                  {vinLoading ? "..." : "Dekódol"}
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-2">Márka</label>
+              <label className="block text-slate-200 font-bold text-base mb-2">Márka</label>
               <input
                 type="text"
-                placeholder="Pl. Volkswagen"
+                placeholder="Pl. Opel, VW, Ford"
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3 text-xs text-white focus:ring-2 focus:ring-blue-500/50"
+                className="w-full metro-input text-base font-bold"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-2">Modell</label>
+              <label className="block text-slate-200 font-bold text-base mb-2">Modell</label>
               <input
                 type="text"
-                placeholder="Pl. Golf VII Variant"
+                placeholder="Pl. Astra, Golf, Focus"
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3 text-xs text-white focus:ring-2 focus:ring-blue-500/50"
+                className="w-full metro-input text-base font-bold"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-2">Évjárat</label>
+              <label className="block text-slate-200 font-bold text-base mb-2">Évjárat</label>
               <input
                 type="number"
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3 text-xs text-white focus:ring-2 focus:ring-blue-500/50 font-mono"
+                className="w-full metro-input font-mono font-bold text-base"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-2">Üzemanyag</label>
+              <label className="block text-slate-200 font-bold text-base mb-2">Üzemanyag</label>
               <select
                 value={fuelType}
                 onChange={(e) => setFuelType(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3 text-xs text-white focus:ring-2 focus:ring-blue-500/50"
+                className="w-full metro-input font-bold text-base"
               >
                 <option value="Diesel">Dízel</option>
                 <option value="Petrol">Benzin</option>
@@ -327,21 +322,22 @@ export default function ReceptionPage() {
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-2">Aktuális km-óra állás</label>
+              <label className="block text-slate-200 font-bold text-base mb-2">Aktuális km-óra állás</label>
               <input
                 type="number"
+                placeholder="Pl. 145000"
                 value={mileage}
                 onChange={(e) => setMileage(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3 text-xs text-white font-mono font-bold focus:ring-2 focus:ring-blue-500/50"
+                className="w-full metro-input font-mono font-bold text-base text-emerald-400"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-2">Prioritás</label>
+              <label className="block text-slate-200 font-bold text-base mb-2">Prioritás</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3 text-xs text-white font-bold focus:ring-2 focus:ring-blue-500/50"
+                className="w-full metro-input font-bold text-base"
               >
                 <option value="NORMAL">Normál</option>
                 <option value="HIGH">Sürgős (Magas)</option>
@@ -352,38 +348,36 @@ export default function ReceptionPage() {
         </div>
 
         {/* Step 3: Issue Description */}
-        <div className="glass-panel rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
-          <h2 className="text-base font-bold text-white flex items-center gap-2.5 pb-4 border-b border-slate-800">
-            <div className="w-7 h-7 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold">
-              3
-            </div>
-            <span>Hibaleírás & Munkakérés</span>
+        <div className="bg-slate-850 border-2 border-slate-700 rounded-3xl p-7 shadow-xl space-y-4">
+          <h2 className="text-2xl font-black text-white flex items-center gap-3 pb-4 border-b-2 border-slate-700">
+            <span className="w-9 h-9 bg-amber-600 rounded-xl flex items-center justify-center text-white text-lg font-black">3</span>
+            <span>Hibaleírás & Ügyfélkérés</span>
           </h2>
 
-          <div className="text-xs space-y-2">
-            <label className="block text-slate-300 font-semibold">
-              Ügyfél által jelzett panaszok / Elvégzendő műveletek *
+          <div>
+            <label className="block text-slate-200 font-bold text-base mb-2">
+              Ügyfél által jelzett hibák / Elvégzendő karbantartási műveletek *
             </label>
             <textarea
               required
               rows={4}
-              placeholder="Pl. Fék ráz 90 felett, jobb elölről kopogás hallható, vagy 15.000 km-es olajcsere szűrőkkel..."
+              placeholder="Pl. Éves kötelező szerviz: olajcsere szűrőkkel, fékbetétek ellenőrzése, jobb első futómű kopogás kivizsgálása..."
               value={issueDescription}
               onChange={(e) => setIssueDescription(e.target.value)}
-              className="w-full bg-slate-950/90 border border-slate-700/80 rounded-2xl p-4 text-xs text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:outline-none transition leading-relaxed"
+              className="w-full metro-input text-base font-medium leading-relaxed"
             />
           </div>
         </div>
 
-        {/* Submit Action */}
-        <div className="flex justify-end pt-2">
+        {/* Submit Button */}
+        <div className="flex justify-end pt-4">
           <button
             type="submit"
             disabled={submitting}
-            className="btn-gradient-primary px-8 py-4 text-white font-black rounded-2xl text-sm flex items-center gap-2.5 shadow-2xl shadow-blue-600/40 hover:scale-105 transition-all disabled:opacity-50"
+            className="btn-metro-green text-xl py-5 px-10 rounded-2xl font-black shadow-2xl disabled:opacity-50"
           >
-            <CheckCircle2 className="w-5 h-5" />
-            <span>{submitting ? "Munkalap rögzítése..." : "Munkalap Létrehozása & Megnyitása"}</span>
+            <CheckCircle2 className="w-7 h-7" />
+            <span>{submitting ? "Munkalap létrehozása..." : "MUNKALAP MEGNYITÁSA & MENTÉS"}</span>
           </button>
         </div>
       </form>
@@ -395,9 +389,6 @@ export default function ReceptionPage() {
         vehiclePlate={licensePlate}
         onApplyDiagnosis={(diag) => {
           setIssueDescription(diag.structuredIssue);
-          if (diag.recommendedOperations.length > 0) {
-            setEstimatedHours(String(diag.recommendedOperations.reduce((acc, curr) => acc + curr.estimatedHours, 0)));
-          }
         }}
       />
     </div>
