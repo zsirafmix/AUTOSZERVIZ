@@ -45,6 +45,7 @@ export default function Sidebar() {
     { href: "/suppliers", label: "Beszállítók", icon: Truck, enabled: isFeatureEnabled("suppliers") },
     { href: "/time-tracking", label: "Pénzügyek & Munkaidő", icon: DollarSign, enabled: isFeatureEnabled("time_tracking") },
     { href: "/reminders", label: "Emlékeztetők", icon: BarChart3, enabled: isFeatureEnabled("reminders") },
+    { href: "/users", label: "Munkatársak & Jogok", icon: Users, enabled: true },
     { href: "/settings", label: "Beállítások", icon: Settings, enabled: true },
   ].filter((item) => item.enabled);
 
